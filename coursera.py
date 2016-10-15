@@ -36,7 +36,7 @@ def get_course_info(course_url):
     script_json_data = info.find("script",
                                  attrs={"type": "application/ld+json"})
     if script_json_data:
-        json_date = json.loads(script_json_data)
+        json_date = json.loads(script_json_data.text)
         course_instance = son_date['hasCourseInstance'][0]
         start_date = course_instance.get('startDate', '')
         language = course_instance.get('inLanguage', '')
