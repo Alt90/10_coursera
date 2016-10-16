@@ -9,12 +9,11 @@ from openpyxl import Workbook
 
 
 def get_xml(course_url):
-    return requests.get(course_url).text
+    return requests.get(course_url).content
 
 
 def get_courses_list_links(coursera_xml):
-    encode_xml = coursera_xml.encode('utf-8')
-    return [element[0].text for element in etree.XML(encode_xml)]
+    return [element[0].text for element in etree.XML(coursera_xml)[:20]]
 
 
 def get_courses_list(course_list_links):
@@ -31,7 +30,7 @@ def get_course_info(course_url):
     if (html.url != course_url):
         return {}
     print(u'Parse url: %s' % html.url)
-    info = BeautifulSoup(html.text, 'html.parser')
+    info = BeautifulSoup(html.content, 'html.parser')
     name = info.find("div", attrs={"class": "title"}).text
     script_json_data = info.find("script",
                                  attrs={"type": "application/ld+json"})
@@ -58,11 +57,13 @@ def get_course_info(course_url):
 def output_courses_info_to_xlsx(course_list):
     work_book = Workbook()
     work_sheet = work_book.active
+    work_sheet.column_dimensions['A'].width = 70
     work_sheet.append(['cource_name',
                        'language',
                        'start_date',
                        'count_weeks',
                        'rating'])
+    work_sheet.append([])
     for course in course_list:
         work_sheet.append([course['cource_name'],
                            course['language'],
