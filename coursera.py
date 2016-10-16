@@ -13,7 +13,7 @@ def get_xml(course_url):
 
 
 def get_courses_list_links(coursera_xml):
-    return [element[0].text for element in etree.XML(coursera_xml)[:20]]
+    return [element[0].text for element in etree.XML(coursera_xml)]
 
 
 def get_courses_list(course_list_links):
