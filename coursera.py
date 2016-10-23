@@ -2,18 +2,14 @@ import sys
 import requests
 import json
 
-
 from lxml import etree
 from bs4 import BeautifulSoup
 from openpyxl import Workbook
 
 
-def get_xml(course_url):
-    return requests.get(course_url).content
-
-
-def get_courses_list_links(coursera_xml):
-    return [element[0].text for element in etree.XML(coursera_xml)]
+def get_courses_list_links(coursera_xml_file):
+    etree_root = etree.parse(coursera_xml_file).getroot()
+    return [element[0].text for element in etree_root]
 
 
 def get_courses_list(course_list_links):
@@ -26,8 +22,8 @@ def get_courses_list(course_list_links):
 
 
 def get_course_info(course_url):
-    html = requests.get(course_url)
-    if (html.url != course_url):
+    html = requests.get(course_url, allow_redirects=False)
+    if (html.status_code != requests.codes.ok):
         return {}
     print(u'Parse url: %s' % html.url)
     info = BeautifulSoup(html.content, 'html.parser')
@@ -37,15 +33,13 @@ def get_course_info(course_url):
     if script_json_data:
         json_date = json.loads(script_json_data.text)
         course_instance = json_date['hasCourseInstance'][0]
-        start_date = course_instance.get('startDate', '')
-        language = course_instance.get('inLanguage', '')
     else:
-        language = start_date = ''
+        course_instance = {}
+    start_date = course_instance.get('startDate', None)
+    language = course_instance.get('inLanguage', None)
     rating_info = info.find("div", attrs={"class": "ratings-text"})
-    if rating_info:
-        rating = rating_info.text[:rating_info.text.find(' ')]
-    else:
-        rating = ''
+    rating = rating_info.text if rating_info else None
+    rating = rating[:rating.find(' ')] if rating is not None else None
     count_weeks = len(info.find_all("div", attrs={"class": "week"}))
     return {'cource_name': name,
             'language': language,
@@ -54,10 +48,10 @@ def get_course_info(course_url):
             'rating': rating}
 
 
-def output_courses_info_to_xlsx(course_list):
+def output_courses_info_to_xlsx(course_list, max_cource_name_width=70):
     work_book = Workbook()
     work_sheet = work_book.active
-    work_sheet.column_dimensions['A'].width = 70
+    work_sheet.column_dimensions['A'].width = max_cource_name_width
     work_sheet.append(['cource_name',
                        'language',
                        'start_date',
@@ -75,11 +69,10 @@ def output_courses_info_to_xlsx(course_list):
 
 if __name__ == '__main__':
     if (len(sys.argv) < 2):
-        print("File don`t enter. We use default file from coursera.")
-        course_url = 'https://www.coursera.org/sitemap~www~courses.xml'
+        print("File don`t enter.")
+        exit()
     else:
-        course_url = sys.argv[1]
-    coursera_xml = get_xml(course_url)
-    course_list_links = get_courses_list_links(coursera_xml)
+        coursera_xml_file = sys.argv[1]
+    course_list_links = get_courses_list_links(coursera_xml_file)
     course_list = get_courses_list(course_list_links)
     output_courses_info_to_xlsx(course_list)

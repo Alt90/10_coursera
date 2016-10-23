@@ -5,8 +5,8 @@
 
 Запуск:
 
-    python coursera https://www.coursera.org/sitemap~www~courses.xml
+    python coursera.py /path/to/sitemap~www~courses.xml
 
-На выходе в томже каталоге появится файл:
+На выходе в томже каталоге c coursera.py появится файл:
 
     courses.xlsx
